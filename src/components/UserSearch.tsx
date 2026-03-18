@@ -16,15 +16,16 @@ export default function UserSearch({ onSelectUser, currentUser }: any) {
   useEffect(() => {
     const fetchUsers = async () => {
       const data = await getAllUsers();
-      setUsers(data);
+      setUsers(data); // ✅ now types match
     };
 
     fetchUsers();
   }, []);
 
-  const filtered = users.filter((u) =>
-  u.username?.toLowerCase().includes(query.toLowerCase()) &&
-  u.id !== currentUser.id   // ✅ REMOVE SELF
+  const filtered = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(query.toLowerCase()) &&
+      u.id !== currentUser.id // ✅ remove self
   );
 
   return (
