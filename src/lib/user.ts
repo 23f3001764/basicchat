@@ -1,7 +1,12 @@
 import { db } from "./firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 
-// ✅ GET ALL USERS FROM FIRESTORE
+// ✅ SAVE USER TO FIRESTORE
+export const saveUserToDB = async (user: any) => {
+  await setDoc(doc(db, "users", user.id), user);
+};
+
+// ✅ GET ALL USERS
 export const getAllUsers = async () => {
   const snapshot = await getDocs(collection(db, "users"));
 

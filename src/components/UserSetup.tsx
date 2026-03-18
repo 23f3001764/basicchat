@@ -15,43 +15,48 @@ export default function UserSetup({ onUserCreated }: any) {
   };
 
   const createUser = async () => {
-  const user = {
-    id: uuidv4(),
-    username,
-    avatar,
-  };
+    if (!username || !avatar) return;
 
-  localStorage.setItem("user", JSON.stringify(user));
+    const user = {
+      id: uuidv4(),
+      username,
+      avatar,
+    };
 
-  await saveUserToDB(user);
+    localStorage.setItem("user", JSON.stringify(user));
 
-  onUserCreated(user);
+    await saveUserToDB(user); // ✅ FIXED
+
+    onUserCreated(user);
   };
 
   return (
-  <div className="flex flex-col gap-4 items-center">
+    <div className="flex flex-col gap-4 items-center">
 
-  <input
-    placeholder="Enter username"
-    className="p-2 w-full rounded bg-white/20 text-white text-center"
-    onChange={(e) => setUsername(e.target.value)}
-  />
+      <input
+        placeholder="Enter username"
+        className="p-2 w-full rounded bg-white/20 text-white text-center"
+        onChange={(e) => setUsername(e.target.value)}
+      />
 
-  <button className="bg-white/20 px-4 py-2 rounded" onClick={generateAvatar}>
-    Generate Avatar
-  </button>
+      <button
+        className="bg-white/20 px-4 py-2 rounded"
+        onClick={generateAvatar}
+      >
+        Generate Avatar
+      </button>
 
-  {avatar && (
-    <img src={avatar} className="w-24 h-24 rounded-full" />
-  )}
+      {avatar && (
+        <img src={avatar} className="w-24 h-24 rounded-full" />
+      )}
 
-  <button
-    className="bg-blue-500 px-4 py-2 rounded text-white"
-    onClick={createUser}
-  >
-    Create User
-  </button>
+      <button
+        className="bg-blue-500 px-4 py-2 rounded text-white"
+        onClick={createUser}
+      >
+        Create User
+      </button>
 
-  </div>
+    </div>
   );
 }
