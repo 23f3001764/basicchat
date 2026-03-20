@@ -23,5 +23,13 @@ export const loginUser = async (username: string, password: string) => {
 export const getAllUsers = async () => {
   const snap = await getDocs(collection(db, "users"));
 
-  return snap.docs.map(doc => doc.data()); // now includes id
+  return snap.docs.map((doc) => {
+    const data = doc.data();
+
+    return {
+      id: data.id || doc.id, // ✅ important
+      username: data.username || "",
+      avatar: data.avatar || "",
+    };
+  });
 };

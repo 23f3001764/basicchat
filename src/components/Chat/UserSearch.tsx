@@ -16,7 +16,7 @@ export default function UserSearch({ onSelectUser, currentUser }: any) {
   useEffect(() => {
     const fetchUsers = async () => {
       const data = await getAllUsers();
-      setUsers(data); // ✅ now types match
+      setUsers(data as User[]); // ✅ now types match
     };
 
     fetchUsers();
