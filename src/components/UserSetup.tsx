@@ -6,57 +6,81 @@ import { saveUserToDB } from "@/lib/user";
 
 export default function UserSetup({ onUserCreated }: any) {
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [avatar, setAvatar] = useState("");
 
+  // ✅ Generate avatar
   const generateAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
-    const url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
-    setAvatar(url);
+    setAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
   };
 
-  const createUser = async () => {
-    if (!username || !avatar) return;
+  // ✅ Handle signup
+  const handleSignup = async () => {
+    if (!username || !password || !avatar) {
+      alert("Fill all fields + generate avatar");
+      return;
+    }
 
     const user = {
       id: uuidv4(),
       username,
+      password,
       avatar,
     };
 
+    // ✅ Save locally
     localStorage.setItem("user", JSON.stringify(user));
 
-    await saveUserToDB(user); // ✅ FIXED
+    // ✅ Save to Firebase
+    await saveUserToDB(user);
 
+    // ✅ Redirect / callback
     onUserCreated(user);
   };
 
   return (
-    <div className="flex flex-col gap-4 items-center">
+    <div className="flex flex-col items-center justify-center gap-4 bg-white/10 backdrop-blur-xl p-8 rounded-2xl w-[350px] border border-white/20 shadow-xl">
+      
+      <h2 className="text-xl font-bold text-white">Create Account</h2>
 
+      {/* Username */}
       <input
-        placeholder="Enter username"
-        className="p-2 w-full rounded bg-white/20 text-white text-center"
+        type="text"
+        placeholder="Username"
+        className="w-full p-2 rounded bg-white/20 text-white placeholder-gray-300 outline-none"
+        value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
 
+      {/* Password */}
+      <input
+        type="password"
+        placeholder="Password"
+        className="w-full p-2 rounded bg-white/20 text-white placeholder-gray-300 outline-none"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      {/* Avatar */}
       <button
-        className="bg-white/20 px-4 py-2 rounded"
         onClick={generateAvatar}
+        className="bg-blue-500 px-4 py-2 rounded text-white"
       >
         Generate Avatar
       </button>
 
       {avatar && (
-        <img src={avatar} className="w-24 h-24 rounded-full" />
+        <img src={avatar} alt="avatar" className="w-16 h-16 rounded-full" />
       )}
 
+      {/* Signup */}
       <button
-        className="bg-blue-500 px-4 py-2 rounded text-white"
-        onClick={createUser}
+        onClick={handleSignup}
+        className="bg-green-500 px-4 py-2 rounded text-white w-full"
       >
-        Create User
+        Sign Up
       </button>
-
     </div>
   );
 }
