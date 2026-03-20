@@ -1,35 +1,64 @@
 import { db } from "./firebase";
-import { doc, setDoc, getDocs, collection, query, where } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
 
-// SIGNUP
-export const createUser = async (user: any) => {
-  await setDoc(doc(db, "users", user.id), user); // ✅ use ID not username
+// ✅ USER TYPE (important for TypeScript)
+export type User = {
+  id: string;
+  username: string;
+  avatar: string;
+  password: string;
 };
-// LOGIN
-export const loginUser = async (username: string, password: string) => {
+
+// ==============================
+// ✅ SIGNUP / CREATE USER
+// ==============================
+export const createUser = async (user: User) => {
+  await setDoc(doc(db, "users", user.id), user);
+};
+
+// ✅ (Alias for old imports — fixes your Vercel error)
+export const saveUserToDB = createUser;
+
+// ==============================
+// ✅ LOGIN
+// ==============================
+export const loginUser = async (
+  username: string,
+  password: string
+): Promise<User | null> => {
   const q = query(collection(db, "users"), where("username", "==", username));
   const snap = await getDocs(q);
 
   if (snap.empty) return null;
 
-  const user = snap.docs[0].data();
+  const data = snap.docs[0].data() as User;
 
-  if (user.password !== password) return null;
+  if (data.password !== password) return null;
 
-  return user;
+  return data;
 };
 
-// GET USERS
-export const getAllUsers = async () => {
+// ==============================
+// ✅ GET ALL USERS
+// ==============================
+export const getAllUsers = async (): Promise<User[]> => {
   const snap = await getDocs(collection(db, "users"));
 
-  return snap.docs.map((doc) => {
-    const data = doc.data();
+  return snap.docs.map((docSnap) => {
+    const data = docSnap.data();
 
     return {
-      id: data.id || doc.id, // ✅ important
+      id: data.id || docSnap.id,
       username: data.username || "",
       avatar: data.avatar || "",
+      password: data.password || "",
     };
   });
 };
