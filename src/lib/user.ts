@@ -1,22 +1,27 @@
 import { db } from "./firebase";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, query, where } from "firebase/firestore";
 
-// ✅ SAVE USER TO FIRESTORE
-export const saveUserToDB = async (user: any) => {
-  await setDoc(doc(db, "users", user.id), user);
+// SIGNUP
+export const createUser = async (user: any) => {
+  await setDoc(doc(db, "users", user.id), user); // ✅ use ID not username
+};
+// LOGIN
+export const loginUser = async (username: string, password: string) => {
+  const q = query(collection(db, "users"), where("username", "==", username));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+
+  const user = snap.docs[0].data();
+
+  if (user.password !== password) return null;
+
+  return user;
 };
 
-// ✅ GET ALL USERS
+// GET USERS
 export const getAllUsers = async () => {
-  const snapshot = await getDocs(collection(db, "users"));
+  const snap = await getDocs(collection(db, "users"));
 
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-
-    return {
-      id: doc.id,
-      username: data.username || "",
-      avatar: data.avatar || "",
-    };
-  });
+  return snap.docs.map(doc => doc.data()); // now includes id
 };
