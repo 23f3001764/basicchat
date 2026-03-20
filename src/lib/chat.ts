@@ -3,48 +3,59 @@ import {
   collection,
   addDoc,
   query,
-  where,
-  onSnapshot,
   orderBy,
+  onSnapshot,
+  updateDoc,
   doc,
-  updateDoc
 } from "firebase/firestore";
 
-// 📤 SEND MESSAGE
+// ✅ SEND MESSAGE
 export const sendMessage = async (msg: any) => {
-  await addDoc(collection(db, "messages"), msg);
-};
-
-// 🔁 LISTEN MESSAGES (REALTIME)
-export const listenMessages = (
-  userId: string,
-  otherId: string,
-  callback: any
-) => {
-  const q = query(
-    collection(db, "messages"),
-    where("participants", "array-contains", userId),
-    orderBy("timestamp")
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const allMessages = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    const filtered = allMessages.filter(
-      (m: any) =>
-        (m.senderId === userId && m.receiverId === otherId) ||
-        (m.senderId === otherId && m.receiverId === userId)
-    );
-
-    callback(filtered);
+  await addDoc(collection(db, "messages"), {
+    ...msg,
+    status: "sent",
+    timestamp: Date.now(),
   });
 };
 
-// ✅ UPDATE MESSAGE STATUS
-export const updateMessageStatus = async (id: string, status: string) => {
-  const ref = doc(db, "messages", id);
-  await updateDoc(ref, { status });
+// ✅ REALTIME LISTENER
+export const subscribeToMessages = (
+  currentUserId: string,
+  otherUserId: string,
+  callback: (msgs: any[]) => void
+) => {
+  const q = query(collection(db, "messages"), orderBy("timestamp"));
+
+  return onSnapshot(q, (snapshot) => {
+    const msgs: any[] = [];
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      // ✅ FILTER ONLY BETWEEN 2 USERS
+      if (
+        (data.senderId === currentUserId &&
+          data.receiverId === otherUserId) ||
+        (data.senderId === otherUserId &&
+          data.receiverId === currentUserId)
+      ) {
+        msgs.push({
+          id: docSnap.id,
+          ...data,
+        });
+
+        // ✅ AUTO MARK AS SEEN
+        if (
+          data.receiverId === currentUserId &&
+          data.status !== "seen"
+        ) {
+          updateDoc(doc(db, "messages", docSnap.id), {
+            status: "seen",
+          });
+        }
+      }
+    });
+
+    callback(msgs);
+  });
 };

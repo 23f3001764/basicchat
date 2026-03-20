@@ -1,24 +1,18 @@
-"use client";
-
-export default function MessageBubble({ msg, currentUser }: any) {
-  const isMe = msg.senderId === currentUser.id;
-
+export default function MessageBubble({ msg, isOwn }: any) {
   return (
-    <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
       <div
-        className={`p-2 m-1 rounded-lg max-w-[60%] ${
-          isMe
+        className={`px-3 py-2 rounded-lg max-w-[60%] ${
+          isOwn
             ? "bg-blue-500 text-white"
-            : "bg-white/20 text-white"
+            : "bg-gray-300 text-black"
         }`}
       >
-        <p>{msg.text}</p>
+        <div>{msg.text}</div>
 
-        {/* ✅ STATUS TICKS */}
-        {isMe && (
-          <div className="text-xs mt-1 text-right">
-            {msg.status === "sent" && "✓"}
-            {msg.status === "seen" && "✓✓"}
+        {isOwn && (
+          <div className="text-xs mt-1 text-right opacity-70">
+            {msg.status === "seen" ? "✓✓" : "✓"}
           </div>
         )}
       </div>
