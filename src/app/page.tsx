@@ -73,6 +73,13 @@ export default function Home() {
       {open && user && (
         <ChatDashboard onClose={() => setOpen(false)} user={user} />
       )}
+      {user && (
+       <button
+           className="fixed bottom-20 right-6 text-sm bg-purple-600 px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition"
+          onClick={() => router.push("/ai-insights")}>
+          🤖 AI Insights
+        </button>
+      )}
     </div>
   );
 }
