@@ -15,7 +15,24 @@ const sources = [
     name: "NYTimes Tech",
     url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
     keywords: [
-      "AI","Climate","Science","Tech","Energy","Policy"
+      "AI","Climate","Science","Technology","Policy",
+      "Innovation","Startups","Energy","Research"
+    ]
+  },
+  {
+    name: "The Verge",
+    url: "https://www.theverge.com/rss/index.xml",
+    keywords: [
+      "AI","Gadgets","Apps","Big Tech","Google",
+      "Apple","Meta","VR","AR","Software","Internet"
+    ]
+  },
+  {
+    name: "MIT Technology Review",
+    url: "https://www.technologyreview.com/feed/",
+    keywords: [
+      "AI","Machine Learning","Deep Learning","Robotics",
+      "Biotech","Climate Tech","Quantum","Research","Innovation"
     ]
   }
 ];
@@ -23,11 +40,13 @@ const sources = [
 export default function AIInsights() {
   const [selectedSource, setSelectedSource] = useState<any>(null);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const toggleKeyword = (kw: string) => {
+    setError("");
+
     if (selectedKeywords.includes(kw)) {
       setSelectedKeywords(selectedKeywords.filter(k => k !== kw));
     } else if (selectedKeywords.length < 2) {
@@ -40,50 +59,62 @@ export default function AIInsights() {
 
     setLoading(true);
     setError("");
-    setData([]);
+    setData(null);
 
-    const results: any[] = [];
+    try {
+      const res = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          keywords: selectedKeywords, // ✅ FIXED
+          source: selectedSource.url,
+        }),
+      });
 
-    for (const keyword of selectedKeywords) {
-      try {
-        const res = await fetch("/api/ai-insights", {
-          method: "POST",
-          body: JSON.stringify({
-            keyword,
-            source: selectedSource.url,
-          }),
-        });
+      const result = await res.json();
 
-        const result = await res.json();
+      console.log("RAW GEMINI:", result);
 
-        console.log("RAW GEMINI:", result);
-
-        // 🚨 HANDLE RATE LIMIT
-        if (result.error === "RATE_LIMIT") {
-          setError("⚠️ API limit reached. Please try again after some time.");
-          setLoading(false);
-          return;
-        }
-
-        if (!result.raw) continue;
-
-        let cleanText = result.raw
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-
-        try {
-          const parsed = JSON.parse(cleanText);
-          results.push(parsed);
-        } catch (e) {
-          console.error("JSON Parse Error:", cleanText);
-        }
-      } catch (err) {
-        console.error("Request Error:", err);
+      if (result.error === "RATE_LIMIT") {
+        setError("⚠️ API limit reached. Try later.");
+        setLoading(false);
+        return;
       }
+
+      if (result.error === "INVALID_INPUT") {
+        setError("⚠️ Invalid input sent.");
+        setLoading(false);
+        return;
+      }
+
+      if (!result.raw) {
+        setError("⚠️ No response from AI.");
+        setLoading(false);
+        return;
+      }
+
+      const parsed = JSON.parse(result.raw);
+
+      // ✅ DEDUP SAFETY
+      const unique = [];
+      const titles = new Set();
+
+      parsed.articles.forEach((a: any) => {
+        if (!titles.has(a.title)) {
+          titles.add(a.title);
+          unique.push(a);
+        }
+      });
+
+      setData({ articles: unique });
+
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong.");
     }
 
-    setData(results);
     setLoading(false);
   };
 
@@ -92,7 +123,6 @@ export default function AIInsights() {
 
       <h1 className="text-3xl font-bold mb-6">🤖 AI Insights</h1>
 
-      {/* SOURCE */}
       <select
         className="p-2 text-black rounded w-full"
         onChange={(e) =>
@@ -107,7 +137,6 @@ export default function AIInsights() {
         ))}
       </select>
 
-      {/* KEYWORDS */}
       {selectedSource && (
         <div className="mt-4 flex flex-wrap gap-2">
           {selectedSource.keywords.map((kw: string) => (
@@ -126,7 +155,6 @@ export default function AIInsights() {
         </div>
       )}
 
-      {/* BUTTON */}
       <button
         onClick={handleFetch}
         className="mt-6 px-4 py-2 bg-purple-600 rounded-xl"
@@ -134,38 +162,33 @@ export default function AIInsights() {
         {loading ? "Generating..." : "Get AI Insights"}
       </button>
 
-      {/* ERROR */}
       {error && (
         <div className="mt-6 p-4 bg-red-500/20 border border-red-500 rounded-xl">
           {error}
         </div>
       )}
 
-      {/* RESULTS */}
-      <div className="mt-8 space-y-8">
-        {data.map((res, i) =>
-          res.articles?.map((a: any, j: number) => (
+      {data && (
+        <div className="mt-8 space-y-8">
+          {data.articles.map((a: any, i: number) => (
             <div
-              key={`${i}-${j}`}
+              key={i}
               className="p-6 rounded-2xl backdrop-blur-3xl bg-black/40 border border-white/10 shadow-xl"
             >
               <h2 className="text-2xl font-bold mb-2">{a.title}</h2>
 
-              <p className="text-white/90 leading-relaxed">
-                {a.summary}
-              </p>
+              <p className="text-white/90">{a.summary}</p>
 
-              {/* SVG */}
-              <div className="mt-6 flex justify-center items-center bg-white/90 p-4 rounded-xl">
+              <div className="mt-6 flex justify-center bg-white/90 p-4 rounded-xl">
                 <div
                   className="w-[250px] md:w-[300px]"
                   dangerouslySetInnerHTML={{ __html: a.svg }}
                 />
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

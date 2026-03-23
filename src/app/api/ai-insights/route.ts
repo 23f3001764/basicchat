@@ -5,21 +5,33 @@ const parser = new Parser();
 
 export async function POST(req: NextRequest) {
   try {
-    const { keywords, source } = await req.json();
+    const body = await req.json();
 
-    if (!keywords || !source) {
-      return NextResponse.json({ error: "INVALID_INPUT" });
+    const keywords = body?.keywords;
+    const source = body?.source;
+
+    // ✅ FIX: strict validation
+    if (
+      !keywords ||
+      !Array.isArray(keywords) ||
+      keywords.length === 0 ||
+      !source
+    ) {
+      return NextResponse.json({
+        error: "INVALID_INPUT",
+        message: "keywords[] and source required",
+      });
     }
 
     const feed = await parser.parseURL(source);
 
-    // 🔥 STEP 1: CLEAN + LIMIT INPUT
-    const articles = feed.items.slice(0, 12).map((item) => ({
+    // 🔥 CLEAN + LIMIT
+    const articles = feed.items.slice(0, 10).map((item) => ({
       title: item.title || "",
       description: (item.contentSnippet || "").slice(0, 200),
     }));
 
-    // 🔥 STEP 2: FILTER USING ALL KEYWORDS
+    // 🔥 FILTER USING ALL KEYWORDS
     const filtered = articles.filter((a) =>
       keywords.some((kw: string) =>
         (a.title + " " + a.description)
@@ -28,29 +40,28 @@ export async function POST(req: NextRequest) {
       )
     );
 
-    // 🔥 STEP 3: HARD LIMIT (MAX 4 ARTICLES → still cheap)
+    // 🔥 LIMIT HARD
     const finalArticles =
       filtered.length > 0
         ? filtered.slice(0, 4)
         : articles.slice(0, 4);
 
-    // 🔥 DYNAMIC SVG LOGIC
     const keywordText = keywords.join(" ").toLowerCase();
 
     let svgHint = "";
 
     if (keywordText.includes("robot")) {
       svgHint =
-        "Draw a clean robot diagram with labeled parts (head, sensors, arms).";
+        "Draw a clean robot diagram with labeled parts (head, arms, sensors).";
     } else if (
       keywordText.includes("ai") ||
       keywordText.includes("chip") ||
       keywordText.includes("tech")
     ) {
       svgHint =
-        "Draw a line chart or chip architecture diagram with axes and labels.";
+        "Draw a line chart or chip diagram with axes and labels.";
     } else if (keywordText.includes("finance")) {
-      svgHint = "Draw a financial growth chart (bar or line graph).";
+      svgHint = "Draw a financial growth chart.";
     } else if (keywordText.includes("climate")) {
       svgHint = "Draw an environmental trend graph.";
     }
@@ -64,25 +75,22 @@ ${finalArticles
   .join("\n")}
 
 Task:
-- Select ONLY 2 BEST UNIQUE articles relevant to ANY keyword
-- DO NOT repeat articles
-- DO NOT return similar titles
+- Select ONLY 2 BEST UNIQUE articles
+- DO NOT repeat or duplicate articles
 
 For each:
 - title
 - summary (60–100 words)
-- SVG visualization
+- SVG
 
 SVG RULES:
 - width="300" height="300"
 - centered
-- minimal colors (2–4)
-- clean modern design
-- include labels if graph
+- clean design
 
 ${svgHint}
 
-Return ONLY valid JSON:
+Return ONLY JSON:
 {
   "articles": [
     {
@@ -92,10 +100,6 @@ Return ONLY valid JSON:
     }
   ]
 }
-
-STRICT:
-- No markdown
-- No explanation
 `;
 
     const response = await fetch(
@@ -113,7 +117,7 @@ STRICT:
 
     console.log("FULL GEMINI RESPONSE:", data);
 
-    // 🚨 HANDLE RATE LIMIT
+    // 🚨 RATE LIMIT
     if (data?.error?.code === 429) {
       return NextResponse.json({
         error: "RATE_LIMIT",
@@ -128,7 +132,7 @@ STRICT:
       return NextResponse.json({ error: "NO_AI_RESPONSE" });
     }
 
-    // 🔥 CLEAN MARKDOWN JUST IN CASE
+    // 🔥 CLEAN JSON
     const cleanText = text
       .replace(/```json/g, "")
       .replace(/```/g, "")
