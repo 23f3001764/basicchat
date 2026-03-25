@@ -1,6 +1,15 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+  orderBy,
+  limit,
+} from "firebase/firestore";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,3 +28,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
+
+
+
+
+// 🔥 NEW: News Collection Reference
+export const newsCollection = collection(db, "news");
+
+// 🔥 Helper: Add News
+export const addNews = async (news: {
+  title: string;
+  description: string;
+  source: string;
+  category: string;
+}) => {
+  // 🔥 Check duplicate by title
+  const q = query(newsCollection, where("title", "==", news.title));
+  const snapshot = await getDocs(q);
+
+  if (!snapshot.empty) return;
+
+  await addDoc(newsCollection, {
+    ...news,
+    timestamp: serverTimestamp(),
+  });
+};

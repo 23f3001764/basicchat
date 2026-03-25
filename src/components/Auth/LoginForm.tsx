@@ -15,7 +15,8 @@ export default function LoginForm() {
     if (!user) return alert("Invalid credentials");
 
     localStorage.setItem("user", JSON.stringify(user));
-    router.push("/");
+    localStorage.removeItem("aiCache"); // clear old AI cache on new login
+    router.push("/select-domains");;
   };
 
   return (

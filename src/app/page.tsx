@@ -21,10 +21,10 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center text-white relative">
+    <div className="h-full w-full flex items-center justify-center text-white relative">
 
       {/* TOP RIGHT BUTTONS */}
-      <div className="absolute top-6 right-6 flex gap-3">
+      <div className="absolute top-6 right-6 flex gap-3 z-50">
 
         {!user && (
           <>
@@ -54,31 +54,38 @@ export default function Home() {
         )}
       </div>
 
-      {/* TITLE */}
-      <h1 className="text-5xl font-bold hover:scale-110 transition">
-        STEAMI
-      </h1>
+      {/* MAIN CENTER CONTENT */}
+      <div className="flex flex-col items-center justify-center gap-6">
 
-      {/* CHAT BUTTON (ONLY IF LOGGED IN) */}
-      {user && (
-        <button
-          className="fixed bottom-6 right-6 text-3xl"
-          onClick={() => setOpen(true)}
-        >
-          💬
-        </button>
-      )}
+        {/* TITLE */}
+        <h1 className="text-5xl font-bold hover:scale-110 transition">
+          STEAMI
+        </h1>
+
+        {/* CHAT BUTTON */}
+        {user && (
+          <button
+            className="fixed bottom-6 right-96 text-3xl z-50"
+            onClick={() => setOpen(true)}
+          >
+            💬
+          </button>
+        )}
+
+        {/* AI BUTTON */}
+        {user && (
+          <button
+            className="fixed bottom-20 right-96 text-sm bg-purple-600 px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition z-50"
+            onClick={() => router.push("/ai-insights")}
+          >
+            🤖 AI Insights
+          </button>
+        )}
+      </div>
 
       {/* CHAT DASHBOARD */}
       {open && user && (
         <ChatDashboard onClose={() => setOpen(false)} user={user} />
-      )}
-      {user && (
-       <button
-           className="fixed bottom-20 right-6 text-sm bg-purple-600 px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition"
-          onClick={() => router.push("/ai-insights")}>
-          🤖 AI Insights
-        </button>
       )}
     </div>
   );
