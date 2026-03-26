@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import ChatDashboard from "@/components/Chat/ChatDashboard";
+import NewsPanel from "@/components/NewsPanel";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [open, setOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [newsOpen, setNewsOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
@@ -25,8 +28,7 @@ export default function Home() {
 
       {/* TOP RIGHT BUTTONS */}
       <div className="absolute top-6 right-6 flex gap-3 z-50">
-
-        {!user && (
+        {!user ? (
           <>
             <button
               className="bg-white/20 px-4 py-2 rounded"
@@ -42,9 +44,7 @@ export default function Home() {
               Signup
             </button>
           </>
-        )}
-
-        {user && (
+        ) : (
           <button
             className="bg-red-500 px-4 py-2 rounded"
             onClick={logout}
@@ -54,39 +54,44 @@ export default function Home() {
         )}
       </div>
 
-      {/* MAIN CENTER CONTENT */}
-      <div className="flex flex-col items-center justify-center gap-6">
+      {/* CENTER */}
+      <h1 className="text-5xl font-bold">STEAMI</h1>
 
-        {/* TITLE */}
-        <h1 className="text-5xl font-bold hover:scale-110 transition">
-          STEAMI
-        </h1>
+      {/* 🔥 GLASS CONTROL PANEL */}
+      {user && (
+        <div className="fixed right-4 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-xl p-3 rounded-2xl flex flex-col gap-4 shadow-xl border border-white/20 z-50">
 
-        {/* CHAT BUTTON */}
-        {user && (
-          <button
-            className="fixed bottom-6 right-96 text-3xl z-50"
-            onClick={() => setOpen(true)}
-          >
-            💬
-          </button>
-        )}
+          {/* NEWS */}
+          <button onClick={() => setNewsOpen(true)}>📰</button>
 
-        {/* AI BUTTON */}
-        {user && (
-          <button
-            className="fixed bottom-20 right-96 text-sm bg-purple-600 px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition z-50"
-            onClick={() => router.push("/ai-insights")}
-          >
-            🤖 AI Insights
-          </button>
-        )}
-      </div>
+          {/* CHAT */}
+          <button onClick={() => setChatOpen(true)}>💬</button>
 
-      {/* CHAT DASHBOARD */}
-      {open && user && (
-        <ChatDashboard onClose={() => setOpen(false)} user={user} />
+          {/* AI */}
+          <button onClick={() => setAiOpen(true)}>🤖</button>
+
+        </div>
       )}
+
+      {/* CHAT POPUP */}
+      {chatOpen && user && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-lg z-50 flex items-center justify-center">
+          <ChatDashboard onClose={() => setChatOpen(false)} user={user} />
+        </div>
+      )}
+
+      {/* AI POPUP */}
+      {aiOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-lg z-50 flex items-center justify-center">
+          <div className="bg-white/10 backdrop-blur-xl p-6 rounded-xl">
+            <h2>AI Insights</h2>
+            <button onClick={() => setAiOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 SLIDE NEWS PANEL */}
+      <NewsPanel open={newsOpen} onClose={() => setNewsOpen(false)} />
     </div>
   );
 }

@@ -5,25 +5,23 @@ import { listenToNews } from "@/lib/news";
 
 export default function NewsPopup() {
   const [queue, setQueue] = useState<any[]>([]);
-  const [current, setCurrent] = useState<any | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const initialized = useRef(false);
 
   useEffect(() => {
-    // 🔥 prevent double execution
     if (initialized.current) return;
     initialized.current = true;
 
     let unsubscribe: any;
 
     const init = async () => {
-      // ✅ global news (no user filter)
       unsubscribe = await listenToNews("", (news) => {
-        // 🔥 ignore empty overwrite
         if (!news || news.length === 0) return;
 
-        console.log("🔔 POPUP NEWS:", news);
+        console.log("🔔 NEWS:", news);
 
-        setQueue((prev) => [...news.slice(0, 1), ...prev]);
+        setQueue(news);
+        setCurrentIndex(0);
       });
     };
 
@@ -34,20 +32,20 @@ export default function NewsPopup() {
     };
   }, []);
 
+  // 🔥 AUTO ROTATE NEWS
   useEffect(() => {
-    if (!current && queue.length > 0) {
-      setCurrent(queue[0]);
-      setQueue((q) => q.slice(1));
+    if (queue.length === 0) return;
 
-      const timer = setTimeout(() => {
-        setCurrent(null);
-      }, 5000);
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % queue.length);
+    }, 4000); // 4 sec per news
 
-      return () => clearTimeout(timer);
-    }
-  }, [queue, current]);
+    return () => clearInterval(interval);
+  }, [queue]);
 
-  if (!current) return null;
+  if (queue.length === 0) return null;
+
+  const current = queue[currentIndex];
 
   return (
     <div className="fixed bottom-4 left-4 bg-white/20 backdrop-blur-lg p-4 rounded-xl w-72 shadow-xl border border-white/10">
